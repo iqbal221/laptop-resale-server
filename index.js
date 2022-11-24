@@ -4,7 +4,7 @@ const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const port = process.env.PORT || 5000;
 require("dotenv").config();
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 // middle ware
 app.use(cors());
@@ -40,6 +40,13 @@ async function run() {
       const query = {};
       const categories = await categoriesCollection.find(query).toArray();
       res.send(categories);
+    });
+
+    app.get("/categories/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const category = await categoriesCollection.findOne(filter);
+      res.send(category);
     });
   } finally {
   }
