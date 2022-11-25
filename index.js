@@ -26,6 +26,7 @@ const client = new MongoClient(uri, {
 async function run() {
   const usersCollection = client.db("anItBari").collection("users");
   const categoriesCollection = client.db("anItBari").collection("categories");
+  const bookingsCollection = client.db("anItBari").collection("bookings");
 
   try {
     // users
@@ -47,6 +48,13 @@ async function run() {
       const filter = { _id: ObjectId(id) };
       const category = await categoriesCollection.findOne(filter);
       res.send(category);
+    });
+
+    // booking
+    app.post("/bookings", async (req, res) => {
+      const bookingInfo = req.body;
+      const result = await bookingsCollection.insertOne(bookingInfo);
+      res.send(result);
     });
   } finally {
   }
