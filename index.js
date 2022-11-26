@@ -101,6 +101,20 @@ async function run() {
       const result = await addProductCollection.insertOne(productInfo);
       res.send(result);
     });
+
+    app.get("/addProduct", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const products = await addProductCollection.find(query).toArray();
+      res.send(products);
+    });
+
+    app.delete("/addProduct", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const result = await usersCollection.deleteOne(filter);
+      res.send(result);
+    });
   } finally {
   }
 }
