@@ -36,6 +36,12 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/users", async (req, res) => {
+      const query = {};
+      const users = await usersCollection.find(query).toArray();
+      res.send(users);
+    });
+
     // categories
     app.get("/categories", async (req, res) => {
       const query = {};
@@ -53,18 +59,25 @@ async function run() {
     // booking
     app.post("/bookings", async (req, res) => {
       const bookingInfo = req.body;
+
       const query = {
-        name: bookingInfo.name,
+        product: bookingInfo.product,
         email: bookingInfo.email,
       };
-      const alreadyBooked = await bookingsCollection.find(query);
-      if (alreadyBooked) {
+
+      const alreadyBooked = await bookingsCollection.find(query).toArray();
+      if (alreadyBooked.length) {
         const message = `you have already booked ${bookingInfo.product}`;
         return res.send({ acknowledged: false, message });
       }
-
       const result = await bookingsCollection.insertOne(bookingInfo);
       res.send(result);
+    });
+
+    app.get("/bookings", async (req, res) => {
+      const query = {};
+      const bookings = await bookingsCollection.find(query).toArray();
+      res.send(bookings);
     });
   } finally {
   }
