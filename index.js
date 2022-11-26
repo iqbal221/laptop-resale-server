@@ -27,6 +27,7 @@ async function run() {
   const usersCollection = client.db("anItBari").collection("users");
   const categoriesCollection = client.db("anItBari").collection("categories");
   const bookingsCollection = client.db("anItBari").collection("bookings");
+  const addProductCollection = client.db("anItBari").collection("addProduct");
 
   try {
     // users
@@ -37,9 +38,22 @@ async function run() {
     });
 
     app.get("/users", async (req, res) => {
-      const query = {};
-      const users = await usersCollection.find(query).toArray();
-      res.send(users);
+      const userQuery = {
+        role: "User",
+      };
+      const sellerQuery = {
+        role: "Seller",
+      };
+      const users = await usersCollection.find(userQuery).toArray();
+      const sellers = await usersCollection.find(sellerQuery).toArray();
+      res.send({ users, sellers });
+    });
+
+    app.delete("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const result = await usersCollection.deleteOne(filter);
+      res.send(result);
     });
 
     // categories
@@ -75,9 +89,17 @@ async function run() {
     });
 
     app.get("/bookings", async (req, res) => {
-      const query = {};
+      const email = req.query.email;
+      const query = { email: email };
       const bookings = await bookingsCollection.find(query).toArray();
       res.send(bookings);
+    });
+
+    // add product
+    app.post("/addProduct", async (req, res) => {
+      const productInfo = req.body;
+      const result = await addProductCollection.insertOne(productInfo);
+      res.send(result);
     });
   } finally {
   }
