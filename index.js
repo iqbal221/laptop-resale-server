@@ -28,6 +28,9 @@ async function run() {
   const categoriesCollection = client.db("anItBari").collection("categories");
   const bookingsCollection = client.db("anItBari").collection("bookings");
   const addProductCollection = client.db("anItBari").collection("addProduct");
+  const addSpecialProductCollection = client
+    .db("anItBari")
+    .collection("addSpecialProduct");
 
   try {
     // users
@@ -70,6 +73,25 @@ async function run() {
       res.send(category);
     });
 
+    // temporary api
+    app.get("/addSeller", async (req, res) => {
+      const filter = {};
+      const options = { upsert: true };
+      const updateDocument = {
+        $set: {
+          purchaseYear: "",
+          condition: "",
+          phone: "01819832618",
+        },
+      };
+      const result = await categoriesCollection.updateMany(
+        filter,
+        updateDocument,
+        options
+      );
+      res.send(result);
+    });
+
     // booking
     app.post("/bookings", async (req, res) => {
       const bookingInfo = req.body;
@@ -109,10 +131,43 @@ async function run() {
       res.send(products);
     });
 
-    app.delete("/addProduct", async (req, res) => {
+    app.delete("/addProduct/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: ObjectId(id) };
-      const result = await usersCollection.deleteOne(filter);
+      const result = await addProductCollection.deleteOne(filter);
+      res.send(result);
+    });
+
+    // add product for advirtisemen
+    app.post("/addSpecialProduct", async (req, res) => {
+      const specialProduct = req.body;
+      const result = await addSpecialProductCollection.insertOne(
+        specialProduct
+      );
+      res.send(result);
+    });
+
+    app.get("/addSpecialProduct", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      if (!query) {
+        return;
+      }
+      const result = await addSpecialProductCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.get("/addSpecialProduct/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const result = await addSpecialProductCollection.findOne(filter);
+      res.send(result);
+    });
+
+    app.delete("/addSpecialProduct/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const result = await addSpecialProductCollection.deleteOne(filter);
       res.send(result);
     });
   } finally {
