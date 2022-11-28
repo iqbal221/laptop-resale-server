@@ -23,6 +23,24 @@ const client = new MongoClient(uri, {
   serverApi: ServerApiVersion.v1,
 });
 
+// verify token
+const verifyToken = (req, res, next) => {
+  const authHeaders = req.headers.authorization;
+
+  if (!authHeaders) {
+    return res.status(401).send("unauthorized access");
+  }
+
+  const token = authHeaders.split(" ")[1];
+  jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
+    if (err) {
+      return res.status(403).send("forbidden");
+    }
+    req.decoded = decoded;
+    next();
+  });
+};
+
 async function run() {
   const usersCollection = client.db("anItBari").collection("users");
   const categoriesCollection = client.db("anItBari").collection("categories");
@@ -33,6 +51,20 @@ async function run() {
     .collection("addSpecialProduct");
 
   try {
+    // create jwt
+    app.get("/jwt", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const user = await usersCollection.find(query);
+      if (user) {
+        const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, {
+          expiresIn: "1d",
+        });
+        return res.send({ access_token: token });
+      }
+      res.status(403).send({ access_token: "" });
+    });
+
     // users
     app.post("/users", async (req, res) => {
       const users = req.body;
@@ -52,7 +84,7 @@ async function run() {
       res.send({ users, sellers });
     });
 
-    app.delete("/users/:id", async (req, res) => {
+    app.delete("/users/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: ObjectId(id) };
       const result = await usersCollection.deleteOne(filter);
@@ -93,25 +125,6 @@ async function run() {
       res.send(category);
     });
 
-    // temporary api
-    app.get("/addSeller", async (req, res) => {
-      const filter = {};
-      const options = { upsert: true };
-      const updateDocument = {
-        $set: {
-          purchaseYear: "",
-          condition: "",
-          phone: "01819832618",
-        },
-      };
-      const result = await categoriesCollection.updateMany(
-        filter,
-        updateDocument,
-        options
-      );
-      res.send(result);
-    });
-
     // booking
     app.post("/bookings", async (req, res) => {
       const bookingInfo = req.body;
@@ -130,7 +143,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/bookings", async (req, res) => {
+    app.get("/bookings", verifyToken, async (req, res) => {
       const email = req.query.email;
       const query = { email: email };
       const bookings = await bookingsCollection.find(query).toArray();
@@ -138,7 +151,7 @@ async function run() {
     });
 
     // my order
-    app.delete("/myOrder/:id", async (req, res) => {
+    app.delete("/myOrder/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: ObjectId(id) };
       const result = await bookingsCollection.deleteOne(filter);
@@ -167,14 +180,14 @@ async function run() {
     });
 
     // add product for advirtisemen
-    app.post("/addSpecialProduct", async (req, res) => {
+    app.post("/addSpecialProduct", verifyToken, async (req, res) => {
       const specialProduct = req.body;
       const query = { product: specialProduct.product };
       const filter = await addSpecialProductCollection.find(query).toArray();
       if (filter.length > 0) {
         return res.send({
           acknowledged: false,
-          message: "You already added to advertisement",
+          message: "You have already added to advertisement this product",
         });
       }
       const result = await addSpecialProductCollection.insertOne(
@@ -183,7 +196,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/addSpecialProduct", async (req, res) => {
+    app.get("/addSpecialProduct", verifyToken, async (req, res) => {
       const email = req.query.email;
       const query = { email: email };
 
