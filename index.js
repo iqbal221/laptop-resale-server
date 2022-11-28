@@ -59,6 +59,26 @@ async function run() {
       res.send(result);
     });
 
+    // admin, user ,seller
+
+    app.get("/users/admin/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const user = await usersCollection.findOne(query);
+
+      if (user?.role === "admin") {
+        return res.send({ isAdmin: true });
+      }
+
+      if (user?.role === "User") {
+        return res.send({ isUser: true });
+      }
+
+      if (user?.role === "Seller") {
+        return res.send({ isSeller: true });
+      }
+    });
+
     // categories
     app.get("/categories", async (req, res) => {
       const query = {};
@@ -117,6 +137,14 @@ async function run() {
       res.send(bookings);
     });
 
+    // my order
+    app.delete("/myOrder/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const result = await bookingsCollection.deleteOne(filter);
+      res.send(result);
+    });
+
     // add product
     app.post("/addProduct", async (req, res) => {
       const productInfo = req.body;
@@ -141,6 +169,14 @@ async function run() {
     // add product for advirtisemen
     app.post("/addSpecialProduct", async (req, res) => {
       const specialProduct = req.body;
+      const query = { product: specialProduct.product };
+      const filter = await addSpecialProductCollection.find(query).toArray();
+      if (filter.length > 0) {
+        return res.send({
+          acknowledged: false,
+          message: "You already added to advertisement",
+        });
+      }
       const result = await addSpecialProductCollection.insertOne(
         specialProduct
       );
@@ -150,9 +186,7 @@ async function run() {
     app.get("/addSpecialProduct", async (req, res) => {
       const email = req.query.email;
       const query = { email: email };
-      if (!query) {
-        return;
-      }
+
       const result = await addSpecialProductCollection.find(query).toArray();
       res.send(result);
     });
