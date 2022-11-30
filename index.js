@@ -49,6 +49,7 @@ async function run() {
   const addSpecialProductCollection = client
     .db("anItBari")
     .collection("addSpecialProduct");
+  const wishlistCollection = client.db("anItBari").collection("wishlist");
 
   try {
     // create jwt
@@ -199,7 +200,6 @@ async function run() {
     app.get("/addSpecialProduct", verifyToken, async (req, res) => {
       const email = req.query.email;
       const query = { email: email };
-
       const result = await addSpecialProductCollection.find(query).toArray();
       res.send(result);
     });
@@ -211,11 +211,19 @@ async function run() {
       res.send(result);
     });
 
-    app.delete("/addSpecialProduct/:id", async (req, res) => {
+    //wishlist
+    app.get("/wishlist/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: ObjectId(id) };
-      const result = await addSpecialProductCollection.deleteOne(filter);
-      res.send(result);
+      const category = await categoriesCollection.findOne(filter);
+      res.send(category);
+    });
+
+    app.get("/wishlistSpecial/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const category = await addSpecialProductCollection.findOne(filter);
+      res.send(category);
     });
   } finally {
   }
