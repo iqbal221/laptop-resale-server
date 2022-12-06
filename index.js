@@ -180,7 +180,7 @@ async function run() {
       res.send(result);
     });
 
-    // add product for advirtisemen
+    // add product for advirtisement
     app.post("/addSpecialProduct", verifyToken, async (req, res) => {
       const specialProduct = req.body;
       const query = { product: specialProduct.product };
