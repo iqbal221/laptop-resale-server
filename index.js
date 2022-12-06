@@ -211,7 +211,7 @@ async function run() {
       res.send(result);
     });
 
-    //wishlist
+    // wishlist
     app.get("/wishlist/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: ObjectId(id) };
